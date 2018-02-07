@@ -21,6 +21,11 @@ param (
     [switch] $ignoreAge = $false
 )
 
+function GetDuration($startTime){
+    return [math]::Round(([datetime]::UtcNow - $startTime).TotalMilliseconds)
+}
+
+
 if($skipLogin -eq $true)
 {
     Get-AzureRmSubscription -SubscriptionId $subscriptionId | Set-AzureRmContext
@@ -31,11 +36,14 @@ else {
 
 $maxAge = [datetime]::UtcNow.AddDays(-$maxAgeDays)
 
+$startTime = [datetime]::UtcNow
+Write-Host "Start time: $($startTime.ToString('u'))`n"
+
 $rawResourceGroups = Get-AzureRmResourceGroup | Where-Object ResourceGroupName -Like $resourceGroupNamePattern
 
 Write-Host "Found resource groups:"
 $rawResourceGroups | ForEach-Object { Write-Host $_.ResourceGroupName }
-Write-Host
+Write-Host "Duration: $(GetDuration -startTime $startTime)ms`n`n"; $startTime = [datetime]::UtcNow
 
 $resourceGroups = @()
 
@@ -94,9 +102,8 @@ foreach($resourceGroup in $resourceGroups){
     $position = $position + 1
     $grandTotalDeletions = $grandTotalDeletions + $deleteCount
 }
-Write-Host
-Write-Host "Total to delete: $grandTotalDeletions"
-Write-Host
+Write-Host "Duration: $(GetDuration -startTime $startTime)ms`n"; $startTime = [datetime]::UtcNow
+Write-Host "Total to delete: $grandTotalDeletions`n`n"
 
 if($delete -eq $false){
     return;
@@ -104,14 +111,16 @@ if($delete -eq $false){
 
 foreach($resourceGroup in $resourceGroups){
     $resourceGroupName = $resourceGroup.Name
+    $resourceGroupStartTime = [datetime]::UtcNow
 
     Write-Host "Deleting $($resourceGroup.DeploymentsToDeleteCount) deployments from $resourceGroupName"
     foreach($deployment in $resourceGroup.Deployments){
         $deploymentName = $deployment.DeploymentName
 
         $result = Remove-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -DeploymentName $deploymentName
-        Write-Host "Deleted $($deployment.DeploymentName) [$($deployment.Timestamp)]"
+        Write-Host "[$([datetime]::UtcNow.ToString("u"))] Deleted $($deployment.DeploymentName) [$($deployment.Timestamp)]"
     }
-    Write-Host
-    Write-Host
+    Write-Host "`nResource Group Duration: $(GetDuration -startTime $resourceGroupStartTime)ms`n"
 }
+
+Write-Host "Total Deletion Duration: $(GetDuration -startTime $startTime)ms`n"
