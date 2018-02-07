@@ -9,7 +9,7 @@ By default, this will analyse resource groups but not delete anything. Deletion 
 ---
 
 ## Examples
-### Count all deployments older than 30 days for each group
+### Check for deployments older than 30 days for each resource group
 
 ```powershell
 .\deployment-maid.ps1 `
@@ -20,7 +20,7 @@ By default, this will analyse resource groups but not delete anything. Deletion 
 
 _Add the ```-delete``` flag to also delete the listed deployments._
 
-### Ensure all resource groups have 100 deployments or less
+### Enforce a maximum of 100 deployments per resource group
 ```powershell
 .\deployment-maid.ps1 `
  -subscriptionId subId `
@@ -37,22 +37,22 @@ _Add the ```-delete``` flag to also delete the listed deployments._
 | Name           | Value | Description |
 | -------------- | ----- | ----------- |
 | subscriptionId | string  | Azure subscription Id |
-| resourceGroupNamePattern | string | Filters resource group based on their name. Wildcards supported. E.g. "Dev-*" |
+| resourceGroupNamePattern | string | Filters resource groups based on their name. Wildcards supported.<br>E.g. "MyResourceGroup"<br>E.g. "Dev-*" |
 
 ## Optional Parameters
 
 | Name      | Value | Description |
 | --------- | ----- | ----------- |
-| maxAgeDays | Int  | Deployments older than this will be deleted. Default: 30. Can be disabled via the ```-ignoreAge``` flag. |
+| maxAgeDays | Int  | Deployments older than this will be deleted. Default: 30. Can be disabled via the ```-ignoreAge``` flag |
 | maxDeploymentsPerGroup | Int | Ensure that no resource group has more deployments than this. Default: 800 |
 
 ## Optional Flags
 
 | Name      | Description |
 | --------- | ----------- |
-| ignoreAge | Ignore maxAgeDays. | 
-| delete | Delete highlighted deployments. |
-| skipLogin | Skip login and use existing session. If running the script multiple times, use this after the first run. |
+| ignoreAge | Ignore maxAgeDays | 
+| delete | Delete highlighted deployments |
+| skipLogin | Skip login and use existing session. If running the script multiple times, use this after the first run |
 
 
 
