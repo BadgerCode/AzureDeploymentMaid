@@ -43,6 +43,7 @@ _Add the ```-delete``` flag to also delete the listed deployments._
 
 | Name      | Value | Description |
 | --------- | ----- | ----------- |
+| ignoredResourceGroups | String | Comma-separated list of resource groups to ignore. E.g. "Group1, Group2".<br>Applied after finding groups with resourceGroupNamePattern. |
 | maxAgeDays | Int  | Deployments older than this will be deleted. Default: 30. Can be disabled via the ```-ignoreAge``` flag |
 | maxDeploymentsPerGroup | Int | Ensure that no resource group has more deployments than this. Default: 800 |
 

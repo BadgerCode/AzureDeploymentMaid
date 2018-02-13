@@ -6,6 +6,9 @@ param (
     [string] $resourceGroupNamePattern,
 
     [Parameter(Mandatory=$false)]
+    [string] $ignoredResourceGroups,
+
+    [Parameter(Mandatory=$false)]
     [string] $maxAgeDays = 30,
 
     [Parameter(Mandatory=$false)]
@@ -40,6 +43,11 @@ $startTime = [datetime]::UtcNow
 Write-Host "Start time: $($startTime.ToString('u'))`n"
 
 $rawResourceGroups = Get-AzureRmResourceGroup | Where-Object ResourceGroupName -Like $resourceGroupNamePattern
+
+if([string]::IsNullOrWhiteSpace($ignoredResourceGroups) -eq $false){
+    $ignoredResourceGroupsPattern = $ignoredResourceGroups.Replace(",", "|").Trim();
+    $rawResourceGroups = $rawResourceGroups | Where-Object ResourceGroupName -NotMatch $ignoredResourceGroupsPattern
+}
 
 Write-Host "Found resource groups:"
 $rawResourceGroups | ForEach-Object { Write-Host $_.ResourceGroupName }
