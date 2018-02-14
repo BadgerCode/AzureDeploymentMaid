@@ -45,7 +45,10 @@ Write-Host "Start time: $($startTime.ToString('u'))`n"
 $rawResourceGroups = Get-AzureRmResourceGroup | Where-Object ResourceGroupName -Like $resourceGroupNamePattern
 
 if([string]::IsNullOrWhiteSpace($ignoredResourceGroups) -eq $false){
-    $ignoredResourceGroupsPattern = $ignoredResourceGroups.Replace(",", "|").Trim();
+    $sanitisedGroupNames = @($ignoredResourceGroups.Split(",") `
+        | ForEach-Object { [string]::Concat("^", $_.Trim(), "$") });
+    $ignoredResourceGroupsPattern = [string]::Join("|", $sanitisedGroupNames);
+
     $rawResourceGroups = $rawResourceGroups | Where-Object ResourceGroupName -NotMatch $ignoredResourceGroupsPattern
 }
 
