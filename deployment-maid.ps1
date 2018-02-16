@@ -29,6 +29,12 @@ function GetFormattedDuration($startTime){
     return [timespan]::FromMilliseconds($durationMs).ToString("hh\:mm\:ss\.fff");
 }
 
+function PrintFinalStats($startTime){
+    Write-Host "Start: $($startTime.ToString('u'))"
+    Write-Host "End: $([datetime]::UtcNow.ToString('u'))"
+    Write-Host "Duration: $(GetFormattedDuration -startTime $startTime)`n"
+}
+
 
 if($skipLogin -eq $true)
 {
@@ -41,9 +47,12 @@ else {
 $maxAge = [datetime]::UtcNow.AddDays(-$maxAgeDays)
 
 $startTime = [datetime]::UtcNow
+$currentOperationStartTime = $startTime
 Write-Host "Start time: $($startTime.ToString('u'))`n"
 
-$rawResourceGroups = Get-AzureRmResourceGroup | Where-Object ResourceGroupName -Like $resourceGroupNamePattern
+$rawResourceGroups = Get-AzureRmResourceGroup 
+$totalResourceGroupsCount = $rawResourceGroups.Count
+$rawResourceGroups = $rawResourceGroups | Where-Object ResourceGroupName -Like $resourceGroupNamePattern
 
 if([string]::IsNullOrWhiteSpace($ignoredResourceGroups) -eq $false){
     $sanitisedGroupNames = @($ignoredResourceGroups.Split(",") `
@@ -54,8 +63,18 @@ if([string]::IsNullOrWhiteSpace($ignoredResourceGroups) -eq $false){
 }
 
 Write-Host "Found resource groups:"
+
+if($rawResourceGroups.Count -eq 0)
+{
+    Write-Host "No resource groups found. Check the subscriptionId, resourceGroupNamePattern and ignoredResourceGroups parameters.`n"
+    PrintFinalStats -startTime $startTime
+    return;
+}
+
 $rawResourceGroups | ForEach-Object { Write-Host $_.ResourceGroupName }
-Write-Host "Duration: $(GetFormattedDuration -startTime $startTime)`n`n"; $startTime = [datetime]::UtcNow
+Write-Host "(Resource groups not included: $($totalResourceGroupsCount - $rawResourceGroups.Count))"
+Write-Host "Duration: $(GetFormattedDuration -startTime $currentOperationStartTime)`n`n"; $currentOperationStartTime = [datetime]::UtcNow
+
 
 $resourceGroups = @()
 
@@ -98,12 +117,22 @@ foreach($resourceGroup in $rawResourceGroups){
 
     Write-Host
 }
+Write-Host "Duration: $(GetFormattedDuration -startTime $currentOperationStartTime)`n`n"; $currentOperationStartTime = [datetime]::UtcNow
+
+
+Write-Host "Cleanup Queue:"
+
+if($resourceGroups.Count -eq 0)
+{
+    Write-Host "No resource groups on the cleanup queue.`n"
+    PrintFinalStats -startTime $startTime
+    return;
+}
 
 $resourceGroups = $resourceGroups | Sort-Object -Descending { $_.DeploymentsToDeleteCount }
-
 $grandTotalDeletions = 0
 $position = 1;
-Write-Host "Cleanup Queue:"
+
 foreach($resourceGroup in $resourceGroups){
     $resourceGroupName = $resourceGroup.Name
     $totalDeployments = $resourceGroup.TotalDeployments
@@ -116,9 +145,13 @@ foreach($resourceGroup in $resourceGroups){
 }
 Write-Host "Total to delete: $grandTotalDeletions`n`n"
 
-if($delete -eq $false){
+if($delete -eq $false)
+{
+    Write-Host "Delete flag not set. Stopping.`n"
+    PrintFinalStats -startTime $startTime
     return;
 }
+
 
 foreach($resourceGroup in $resourceGroups){
     $resourceGroupName = $resourceGroup.Name
@@ -134,6 +167,4 @@ foreach($resourceGroup in $resourceGroups){
     Write-Host "`nResource Group Duration: $(GetFormattedDuration -startTime $resourceGroupStartTime)`n"
 }
 
-Write-Host "Start: $($startTime.ToString('u'))"
-Write-Host "End: $([datetime]::UtcNow.ToString('u'))"
-Write-Host "Duration: $(GetFormattedDuration -startTime $startTime)`n"
+PrintFinalStats -startTime $startTime
