@@ -24,8 +24,9 @@ param (
     [switch] $ignoreAge = $false
 )
 
-function GetDuration($startTime){
-    return [math]::Round(([datetime]::UtcNow - $startTime).TotalMilliseconds)
+function GetFormattedDuration($startTime){
+    $durationMs = [math]::Round(([datetime]::UtcNow - $startTime).TotalMilliseconds)
+    return [timespan]::FromMilliseconds($durationMs).ToString("hh\:mm\:ss\.fff");
 }
 
 
@@ -54,7 +55,7 @@ if([string]::IsNullOrWhiteSpace($ignoredResourceGroups) -eq $false){
 
 Write-Host "Found resource groups:"
 $rawResourceGroups | ForEach-Object { Write-Host $_.ResourceGroupName }
-Write-Host "Duration: $(GetDuration -startTime $startTime)ms`n`n"; $startTime = [datetime]::UtcNow
+Write-Host "Duration: $(GetFormattedDuration -startTime $startTime)`n`n"; $startTime = [datetime]::UtcNow
 
 $resourceGroups = @()
 
@@ -113,7 +114,6 @@ foreach($resourceGroup in $resourceGroups){
     $position = $position + 1
     $grandTotalDeletions = $grandTotalDeletions + $deleteCount
 }
-Write-Host "Duration: $(GetDuration -startTime $startTime)ms`n"; $startTime = [datetime]::UtcNow
 Write-Host "Total to delete: $grandTotalDeletions`n`n"
 
 if($delete -eq $false){
@@ -131,7 +131,9 @@ foreach($resourceGroup in $resourceGroups){
         $result = Remove-AzureRmResourceGroupDeployment -ResourceGroupName $resourceGroupName -DeploymentName $deploymentName
         Write-Host "[$([datetime]::UtcNow.ToString("u"))] Deleted $($deployment.DeploymentName) [$($deployment.Timestamp)]"
     }
-    Write-Host "`nResource Group Duration: $(GetDuration -startTime $resourceGroupStartTime)ms`n"
+    Write-Host "`nResource Group Duration: $(GetFormattedDuration -startTime $resourceGroupStartTime)`n"
 }
 
-Write-Host "Total Deletion Duration: $(GetDuration -startTime $startTime)ms`n"
+Write-Host "Start: $($startTime.ToString('u'))"
+Write-Host "End: $([datetime]::UtcNow.ToString('u'))"
+Write-Host "Duration: $(GetFormattedDuration -startTime $startTime)`n"
