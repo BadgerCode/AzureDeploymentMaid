@@ -9,19 +9,16 @@ param (
     [string] $ignoredResourceGroups,
 
     [Parameter(Mandatory=$false)]
-    [string] $maxAgeDays = 30,
+    [double] $maxAgeDays = -1,
 
     [Parameter(Mandatory=$false)]
-    [string] $maxDeploymentsPerGroup = 800,
+    [double] $maxDeploymentsPerGroup = 800,
 
     [Parameter(Mandatory=$false)]
     [switch] $delete = $false,
 
     [Parameter(Mandatory=$false)]
-    [switch] $skipLogin = $false,
-
-    [Parameter(Mandatory=$false)]
-    [switch] $ignoreAge = $false
+    [switch] $skipLogin = $false
 )
 
 function GetFormattedDuration($startTime){
@@ -44,6 +41,7 @@ else {
     Login-AzureRmAccount -SubscriptionId $subscriptionId
 }
 
+$ignoreAge = ($maxAgeDays) -eq -1
 $maxAge = [datetime]::UtcNow.AddDays(-$maxAgeDays)
 
 $startTime = [datetime]::UtcNow
