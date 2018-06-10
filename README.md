@@ -37,7 +37,7 @@ _Add the ```-delete``` flag to also delete the listed deployments._
 | Name           | Value | Description |
 | -------------- | ----- | ----------- |
 | subscriptionId | string  | Azure subscription Id |
-| resourceGroupNamePattern | string | Filters resource groups based on their name. Wildcards supported.<br>E.g. "MyResourceGroup"<br>E.g. "Dev-*" |
+| resourceGroupNamePattern | string | Filters resource groups based on their name. Wildcards supported.<br>E.g.<br>A single resource group: ```"MyResourceGroup"```<br>All groups: ```"\*"```<br>All groups starting with Dev-: ```"Dev-\*"```|
 
 ## Optional Parameters
 
